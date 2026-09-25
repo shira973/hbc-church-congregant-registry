@@ -345,6 +345,59 @@ export default function UserDataEntryScreen() {
     </View>
   );
 
+  const renderPermanentAddressField = (labelKey, addrKey) => {
+    if (addrKey === "pinCode") {
+      return (
+        <View key={addrKey} style={styles.fieldBlock}>
+          <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
+          <TextInput
+            value={form.address.permanent[addrKey]}
+            onChangeText={(value) => {
+              if (/^\d{0,6}$/.test(value)) {
+                setAddressField(addrKey, value);
+                setPinError("");
+                return;
+              }
+
+              setPinError("PIN can only contain numbers.");
+            }}
+            mode="outlined"
+            style={styles.input}
+            contentStyle={styles.inputText}
+            labelStyle={styles.inputLabel}
+            textColor="#000000"
+            placeholderTextColor={placeholderColor}
+            placeholder={FIELD_PLACEHOLDERS[addrKey] || ""}
+            theme={inputTheme}
+            keyboardType="numeric"
+            maxLength={6}
+          />
+          <HelperText type="error" visible={!!pinError} style={styles.errorText}>
+            {pinError}
+          </HelperText>
+        </View>
+      );
+    }
+
+    return (
+      <View key={addrKey} style={styles.fieldBlock}>
+        <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
+        <TextInput
+          value={form.address.permanent[addrKey]}
+          onChangeText={(v) => setAddressField(addrKey, v)}
+          mode="outlined"
+          style={styles.input}
+          contentStyle={styles.inputText}
+          labelStyle={styles.inputLabel}
+          textColor="#000000"
+          placeholderTextColor={placeholderColor}
+          placeholder={FIELD_PLACEHOLDERS[addrKey] || ""}
+          theme={inputTheme}
+        />
+      </View>
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.headerRow}>
@@ -490,53 +543,22 @@ export default function UserDataEntryScreen() {
       <Text variant="titleSmall" style={styles.sectionTitle}>
         {label("permanentAddress", lang)}
       </Text>
-      {PERMANENT_ADDRESS_FIELDS.map(([labelKey, addrKey]) =>
-        addrKey === "pinCode" ? (
-          <View key={addrKey} style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
-            <TextInput
-              value={form.address.permanent[addrKey]}
-              onChangeText={(value) => {
-                if (/^\d{0,6}$/.test(value)) {
-                  setAddressField(addrKey, value);
-                  setPinError("");
-                  return;
-                }
-
-                setPinError("PIN can only contain numbers.");
-              }}
-              mode="outlined"
-              style={styles.input}
-              contentStyle={styles.inputText}
-              labelStyle={styles.inputLabel}
-              textColor="#000000"
-              placeholderTextColor={placeholderColor}
-              placeholder={FIELD_PLACEHOLDERS[addrKey] || ""}
-              theme={inputTheme}
-              keyboardType="numeric"
-              maxLength={6}
-            />
-            <HelperText type="error" visible={!!pinError} style={styles.errorText}>
-              {pinError}
-            </HelperText>
-          </View>
-        ) : (
-          <View key={addrKey} style={styles.fieldBlock}>
-            <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
-            <TextInput
-              value={form.address.permanent[addrKey]}
-              onChangeText={(v) => setAddressField(addrKey, v)}
-              mode="outlined"
-              style={styles.input}
-              contentStyle={styles.inputText}
-              labelStyle={styles.inputLabel}
-              textColor="#000000"
-              placeholderTextColor={placeholderColor}
-              placeholder={FIELD_PLACEHOLDERS[addrKey] || ""}
-              theme={inputTheme}
-            />
-          </View>
-        )
+      {isWeb ? (
+        Array.from({ length: Math.ceil(PERMANENT_ADDRESS_FIELDS.length / 2) }, (_, rowIndex) => {
+          const rowFields = PERMANENT_ADDRESS_FIELDS.slice(rowIndex * 2, rowIndex * 2 + 2);
+          return (
+            <View key={`permanent-address-row-${rowIndex}`} style={styles.twoColumnRow}>
+              <View style={styles.halfColumn}>
+                {rowFields[0] ? renderPermanentAddressField(rowFields[0][0], rowFields[0][1]) : null}
+              </View>
+              <View style={styles.halfColumn}>
+                {rowFields[1] ? renderPermanentAddressField(rowFields[1][0], rowFields[1][1]) : null}
+              </View>
+            </View>
+          );
+        })
+      ) : (
+        PERMANENT_ADDRESS_FIELDS.map(([labelKey, addrKey]) => renderPermanentAddressField(labelKey, addrKey))
       )}
 
       <View style={styles.fieldBlock}>
