@@ -561,40 +561,87 @@ export default function UserDataEntryScreen() {
         PERMANENT_ADDRESS_FIELDS.map(([labelKey, addrKey]) => renderPermanentAddressField(labelKey, addrKey))
       )}
 
-      <View style={styles.compactFieldBlock}>
-        <Text style={styles.fieldLabel}>{label("temporaryAddress", lang)}</Text>
-        <TextInput
-          value={form.address.temporary}
-          onChangeText={(v) =>
-            setForm((f) => ({ ...f, address: { ...f.address, temporary: v } }))
-          }
-          mode="outlined"
-          style={[styles.input, styles.compactInput]}
-          contentStyle={styles.inputText}
-          labelStyle={styles.inputLabel}
-          textColor="#000000"
-          placeholderTextColor={placeholderColor}
-          placeholder={FIELD_PLACEHOLDERS.temporaryAddress}
-          theme={inputTheme}
-        />
-      </View>
-      <View style={styles.compactFieldBlock}>
-        <Text style={styles.fieldLabel}>{label("guardianCaretaker", lang)}</Text>
-        <TextInput
-          value={form.address.guardianCaretaker}
-          onChangeText={(v) =>
-            setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: v } }))
-          }
-          mode="outlined"
-          style={[styles.input, styles.compactInput]}
-          contentStyle={styles.inputText}
-          labelStyle={styles.inputLabel}
-          textColor="#000000"
-          placeholderTextColor={placeholderColor}
-          placeholder={FIELD_PLACEHOLDERS.guardianCaretaker}
-          theme={inputTheme}
-        />
-      </View>
+      {isWeb ? (
+        <>
+          <View style={styles.twoColumnRow}>
+            <View style={styles.halfColumn}>
+              <View style={styles.compactFieldBlock}>
+                <Text style={styles.fieldLabel}>{label("temporaryAddress", lang)}</Text>
+                <TextInput
+                  value={form.address.temporary}
+                  onChangeText={(v) =>
+                    setForm((f) => ({ ...f, address: { ...f.address, temporary: v } }))
+                  }
+                  mode="outlined"
+                  style={[styles.input, styles.compactInput]}
+                  contentStyle={styles.inputText}
+                  labelStyle={styles.inputLabel}
+                  textColor="#000000"
+                  placeholderTextColor={placeholderColor}
+                  placeholder={FIELD_PLACEHOLDERS.temporaryAddress}
+                  theme={inputTheme}
+                />
+              </View>
+            </View>
+            <View style={styles.halfColumn}>
+              <View style={styles.compactFieldBlock}>
+                <Text style={styles.fieldLabel}>{label("guardianCaretaker", lang)}</Text>
+                <TextInput
+                  value={form.address.guardianCaretaker}
+                  onChangeText={(v) =>
+                    setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: v } }))
+                  }
+                  mode="outlined"
+                  style={[styles.input, styles.compactInput]}
+                  contentStyle={styles.inputText}
+                  labelStyle={styles.inputLabel}
+                  textColor="#000000"
+                  placeholderTextColor={placeholderColor}
+                  placeholder={FIELD_PLACEHOLDERS.guardianCaretaker}
+                  theme={inputTheme}
+                />
+              </View>
+            </View>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={styles.compactFieldBlock}>
+            <Text style={styles.fieldLabel}>{label("temporaryAddress", lang)}</Text>
+            <TextInput
+              value={form.address.temporary}
+              onChangeText={(v) =>
+                setForm((f) => ({ ...f, address: { ...f.address, temporary: v } }))
+              }
+              mode="outlined"
+              style={[styles.input, styles.compactInput]}
+              contentStyle={styles.inputText}
+              labelStyle={styles.inputLabel}
+              textColor="#000000"
+              placeholderTextColor={placeholderColor}
+              placeholder={FIELD_PLACEHOLDERS.temporaryAddress}
+              theme={inputTheme}
+            />
+          </View>
+          <View style={styles.compactFieldBlock}>
+            <Text style={styles.fieldLabel}>{label("guardianCaretaker", lang)}</Text>
+            <TextInput
+              value={form.address.guardianCaretaker}
+              onChangeText={(v) =>
+                setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: v } }))
+              }
+              mode="outlined"
+              style={[styles.input, styles.compactInput]}
+              contentStyle={styles.inputText}
+              labelStyle={styles.inputLabel}
+              textColor="#000000"
+              placeholderTextColor={placeholderColor}
+              placeholder={FIELD_PLACEHOLDERS.guardianCaretaker}
+              theme={inputTheme}
+            />
+          </View>
+        </>
+      )}
 
       {admin && (
         <>
@@ -688,8 +735,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   compactInput: {
-    alignSelf: "center",
-    width: "70%",
+    width: "100%",
+    marginBottom: 0,
   },
   fieldLabel: {
     color: "#1d2b3a",
