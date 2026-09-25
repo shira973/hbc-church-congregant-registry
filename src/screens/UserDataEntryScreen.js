@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
-import { Text, TextInput, Button, SegmentedButtons, HelperText } from "react-native-paper";
+import {
+  Text,
+  TextInput,
+  Button,
+  SegmentedButtons,
+  HelperText,
+  RadioButton,
+} from "react-native-paper";
 import { useRoute } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { createMember, updateMember, getMember, DEFAULT_MEMBER } from "../utils/firestoreHelpers";
@@ -42,6 +49,15 @@ export default function UserDataEntryScreen() {
   const { admin } = useAuth(); // null when a congregant fills this in unauthenticated
   const route = useRoute();
   const memberId = route.params?.memberId;
+  const inputTheme = {
+    colors: {
+      text: "#000000",
+      primary: "#1d6fb8",
+      placeholder: "#000000",
+      onSurfaceVariant: "#000000",
+      background: "#cfe0f3",
+    },
+  };
 
   const [lang, setLang] = useState(LANGUAGES[0]);
   const [form, setForm] = useState(emptyForm());
@@ -113,14 +129,29 @@ export default function UserDataEntryScreen() {
         />
       </View>
 
-      <TextInput
-        label={label("sex", lang)}
-        value={form.sex}
-        onChangeText={(v) => setField("sex", v)}
-        mode="outlined"
-        placeholder="Male / Female"
-        style={styles.input}
-      />
+      <View style={styles.radioGroup}>
+        <Text variant="titleSmall" style={styles.sectionTitle}>
+          {label("sex", lang)}
+        </Text>
+        <RadioButton.Group onValueChange={(v) => setField("sex", v)} value={form.sex}>
+          <View style={styles.radioRow}>
+            <RadioButton.Item
+              label="Male"
+              value="Male"
+              position="leading"
+              style={styles.radioItem}
+              labelStyle={styles.radioLabel}
+            />
+            <RadioButton.Item
+              label="Female"
+              value="Female"
+              position="leading"
+              style={styles.radioItem}
+              labelStyle={styles.radioLabel}
+            />
+          </View>
+        </RadioButton.Group>
+      </View>
 
       {BASIC_FIELDS.map(([labelKey, formKey]) => (
         <TextInput
@@ -130,6 +161,11 @@ export default function UserDataEntryScreen() {
           onChangeText={(v) => setField(formKey, v)}
           mode="outlined"
           style={styles.input}
+          contentStyle={styles.inputText}
+          labelStyle={styles.inputLabel}
+          textColor="#000000"
+          placeholderTextColor="#000000"
+          theme={inputTheme}
         />
       ))}
 
@@ -144,6 +180,11 @@ export default function UserDataEntryScreen() {
           onChangeText={(v) => setAddressField(addrKey, v)}
           mode="outlined"
           style={styles.input}
+          contentStyle={styles.inputText}
+          labelStyle={styles.inputLabel}
+          textColor="#000000"
+          placeholderTextColor="#000000"
+          theme={inputTheme}
         />
       ))}
 
@@ -155,6 +196,11 @@ export default function UserDataEntryScreen() {
         }
         mode="outlined"
         style={styles.input}
+        contentStyle={styles.inputText}
+        labelStyle={styles.inputLabel}
+        textColor="#000000"
+        placeholderTextColor="#000000"
+        theme={inputTheme}
       />
       <TextInput
         label={label("guardianCaretaker", lang)}
@@ -164,6 +210,11 @@ export default function UserDataEntryScreen() {
         }
         mode="outlined"
         style={styles.input}
+        contentStyle={styles.inputText}
+        labelStyle={styles.inputLabel}
+        textColor="#000000"
+        placeholderTextColor="#000000"
+        theme={inputTheme}
       />
 
       {admin && (
@@ -177,6 +228,11 @@ export default function UserDataEntryScreen() {
             onChangeText={(v) => setField("dateOfDeath", v)}
             mode="outlined"
             style={styles.input}
+            contentStyle={styles.inputText}
+            labelStyle={styles.inputLabel}
+            textColor="#000000"
+            placeholderTextColor="#000000"
+            theme={inputTheme}
           />
           <TextInput
             label={label("remarks", lang)}
@@ -185,6 +241,11 @@ export default function UserDataEntryScreen() {
             mode="outlined"
             multiline
             style={styles.input}
+            contentStyle={styles.inputText}
+            labelStyle={styles.inputLabel}
+            textColor="#000000"
+            placeholderTextColor="#000000"
+            theme={inputTheme}
           />
         </>
       )}
@@ -199,10 +260,40 @@ export default function UserDataEntryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#dfeaf7",
+  },
   headerRow: { marginBottom: 20 },
-  title: { marginBottom: 12 },
+  title: { marginBottom: 12, color: "#1d2b3a" },
   langToggle: { marginBottom: 8 },
-  sectionTitle: { marginTop: 16, marginBottom: 8 },
-  input: { marginBottom: 12 },
+  sectionTitle: { marginTop: 16, marginBottom: 8, color: "#1d2b3a" },
+  radioGroup: {
+    marginBottom: 12,
+  },
+  radioRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  radioItem: {
+    flex: 1,
+    backgroundColor: "#cfe0f3",
+    borderRadius: 8,
+  },
+  radioLabel: {
+    color: "#1d2b3a",
+    fontSize: 14,
+  },
+  input: {
+    marginBottom: 12,
+    backgroundColor: "#cfe0f3",
+  },
+  inputText: {
+    color: "#000000",
+  },
+  inputLabel: {
+    color: "#000000",
+  },
 });

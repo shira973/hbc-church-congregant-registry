@@ -13,6 +13,11 @@ export default function AdminLoginScreen({ navigation }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const handlePhoneChange = (value) => {
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+    setPhone(digitsOnly);
+  };
+
   const handleRequestOtp = async () => {
     setError("");
     setBusy(true);
@@ -51,8 +56,9 @@ export default function AdminLoginScreen({ navigation }) {
           <TextInput
             label="Registered admin phone number"
             value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
+            onChangeText={handlePhoneChange}
+            keyboardType="number-pad"
+            maxLength={10}
             mode="outlined"
             style={styles.input}
           />
@@ -60,7 +66,7 @@ export default function AdminLoginScreen({ navigation }) {
             mode="contained"
             onPress={handleRequestOtp}
             loading={busy}
-            disabled={busy || phone.trim().length < 6}
+            disabled={busy || phone.trim().length !== 10}
           >
             Send Code
           </Button>
@@ -109,9 +115,21 @@ export default function AdminLoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24 },
-  title: { marginBottom: 24, textAlign: "center" },
-  input: { marginBottom: 16 },
-  helper: { marginBottom: 12 },
-  linkButton: { marginTop: 32 },
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 24,
+    backgroundColor: "#dfeaf7",
+  },
+  title: {
+    marginBottom: 24,
+    textAlign: "center",
+    color: "#1d2b3a",
+  },
+  input: {
+    marginBottom: 16,
+    backgroundColor: "#cfe0f3",
+  },
+  helper: { marginBottom: 12, color: "#1d2b3a" },
+  linkButton: { marginTop: 32, color: "#1d2b3a" },
 });
