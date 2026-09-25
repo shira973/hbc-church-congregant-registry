@@ -561,7 +561,7 @@ export default function UserDataEntryScreen() {
         PERMANENT_ADDRESS_FIELDS.map(([labelKey, addrKey]) => renderPermanentAddressField(labelKey, addrKey))
       )}
 
-      <View style={styles.fieldBlock}>
+      <View style={styles.compactFieldBlock}>
         <Text style={styles.fieldLabel}>{label("temporaryAddress", lang)}</Text>
         <TextInput
           value={form.address.temporary}
@@ -569,7 +569,7 @@ export default function UserDataEntryScreen() {
             setForm((f) => ({ ...f, address: { ...f.address, temporary: v } }))
           }
           mode="outlined"
-          style={styles.input}
+          style={[styles.input, styles.compactInput]}
           contentStyle={styles.inputText}
           labelStyle={styles.inputLabel}
           textColor="#000000"
@@ -578,7 +578,7 @@ export default function UserDataEntryScreen() {
           theme={inputTheme}
         />
       </View>
-      <View style={styles.fieldBlock}>
+      <View style={styles.compactFieldBlock}>
         <Text style={styles.fieldLabel}>{label("guardianCaretaker", lang)}</Text>
         <TextInput
           value={form.address.guardianCaretaker}
@@ -586,7 +586,7 @@ export default function UserDataEntryScreen() {
             setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: v } }))
           }
           mode="outlined"
-          style={styles.input}
+          style={[styles.input, styles.compactInput]}
           contentStyle={styles.inputText}
           labelStyle={styles.inputLabel}
           textColor="#000000"
@@ -683,6 +683,13 @@ const styles = StyleSheet.create({
   },
   fieldBlock: {
     marginBottom: 4,
+  },
+  compactFieldBlock: {
+    marginBottom: 8,
+  },
+  compactInput: {
+    alignSelf: "center",
+    width: "70%",
   },
   fieldLabel: {
     color: "#1d2b3a",
