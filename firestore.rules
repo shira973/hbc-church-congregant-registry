@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedInAdmin() {
+      return request.auth != null && request.auth.token.isAdmin == true;
+    }
+
+    // Members collection: congregation roll book.
+    // Congregants don't log in, so the create path stays open for the
+    // public data-entry form; all other writes require the Firebase
+    // custom-token session minted by verifyOtp (see functions/index.js).
+    match /members/{memberId} {
+      allow read: if true;
+
+      // Public data-entry form (congregants, no login): can create a
+      // record for themselves, but cannot self-grant admin or set the
+      // two admin-only fields.
+      allow create: if request.resource.data.isAdmin == false
+                    && request.resource.data.dateOfDeath == ""
+                    && request.resource.data.remarks == "";
+
+      // Any signed-in admin (custom token minted after OTP verify in
+      // verifyOtp) may update any member record, including admin-only
+      // fields and promoting another member to admin.
+      allow update: if isSignedInAdmin();
+
+      allow delete: if false;
+    }
+
+    // OTP + counters are server-only (Cloud Functions use the admin SDK,
+    // which bypasses these rules entirely).
+    match /otps/{docId} {
+      allow read, write: if false;
+    }
+    match /otp_counters/{docId} {
+      allow read, write: if false;
+    }
+  }
+}

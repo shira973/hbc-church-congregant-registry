@@ -1,0 +1,51 @@
+HOW TO RUN THIS PROJECT
+========================
+
+This is an Expo (React Native) app with a Firebase backend. You need two
+things running: the Firebase project (Firestore + Cloud Functions) and the
+Expo app itself. Full detail is in README.md — this is the short version.
+
+1) INSTALL DEPENDENCIES
+   npm install
+
+2) CREATE A FIREBASE PROJECT
+   - Go to https://console.firebase.google.com -> Add project (free Spark plan).
+   - In the project, add a "Web app" and copy the config object it gives you
+     into firebaseConfig.js (replace every "REPLACE_ME").
+   - Enable Firestore Database (production mode) and Cloud Functions.
+
+3) DEPLOY THE BACKEND
+   npm install -g firebase-tools
+   firebase login
+   firebase use --add            # pick your project
+   firebase functions:config:set brevo.api_key="YOUR_BREVO_KEY" brevo.sender="noreply@yourdomain.org"
+     (sign up free at https://www.brevo.com to get an API key - 300 free emails/day)
+   firebase deploy --only firestore:rules,functions
+
+4) CREATE THE FIRST ADMIN
+   In the Firebase Console -> Firestore -> start a "members" collection ->
+   add one document with at least:
+     name: "<your name>"
+     phone: "<your phone number, e.g. +919999999999>"
+     email: "<your email>"
+     isAdmin: true
+     position: "Admin"
+   (leave every other field from DEFAULT_MEMBER as an empty string / false)
+
+5) RUN THE APP
+   npx expo start
+   - press "w" to open in a browser
+   - press "i" for iOS simulator (Mac only) or "a" for Android emulator
+   - or scan the QR code with the Expo Go app on your phone
+
+6) LOG IN AS ADMIN
+   On the login screen, enter the phone number from step 4, then enter the
+   6-digit code emailed to the address you set. You're now in the admin
+   dashboard and can onboard further admins from there.
+
+7) (OPTIONAL) DEPLOY THE WEB VERSION FOR FREE
+   npx expo export:web
+   firebase deploy --only hosting
+
+Full architecture notes, data model, and security-rule explanation are in
+README.md.
