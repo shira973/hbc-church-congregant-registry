@@ -53,15 +53,23 @@ export default function AdminLoginScreen({ navigation }) {
 
       {stage === "phone" && (
         <>
-          <TextInput
-            label="Registered admin phone number"
-            value={phone}
-            onChangeText={handlePhoneChange}
-            keyboardType="number-pad"
-            maxLength={10}
-            mode="outlined"
-            style={styles.input}
-          />
+          <View style={styles.fieldBlock}>
+            <Text style={styles.fieldLabel}>Registered admin phone number</Text>
+            <TextInput
+              value={phone}
+              onChangeText={handlePhoneChange}
+              keyboardType="number-pad"
+              maxLength={10}
+              mode="outlined"
+              style={styles.input}
+              contentStyle={styles.inputText}
+              labelStyle={styles.inputLabel}
+              textColor="#000000"
+              placeholderTextColor={styles.placeholderColor.color}
+              placeholder="999999999"
+              theme={{ colors: { primary: "#1d6fb8", background: "#cfe0f3" } }}
+            />
+          </View>
           <Button
             mode="contained"
             onPress={handleRequestOtp}
@@ -78,15 +86,23 @@ export default function AdminLoginScreen({ navigation }) {
           <Text style={styles.helper}>
             A 6-digit code was sent to {deliveredTo}.
           </Text>
-          <TextInput
-            label="Enter code"
-            value={code}
-            onChangeText={setCode}
-            keyboardType="number-pad"
-            mode="outlined"
-            maxLength={6}
-            style={styles.input}
-          />
+          <View style={styles.fieldBlock}>
+            <Text style={styles.fieldLabel}>Enter code</Text>
+            <TextInput
+              value={code}
+              onChangeText={setCode}
+              keyboardType="number-pad"
+              mode="outlined"
+              maxLength={6}
+              style={styles.input}
+              contentStyle={styles.inputText}
+              labelStyle={styles.inputLabel}
+              textColor="#000000"
+              placeholderTextColor={styles.placeholderColor.color}
+              placeholder="123456"
+              theme={{ colors: { primary: "#1d6fb8", background: "#cfe0f3" } }}
+            />
+          </View>
           <Button
             mode="contained"
             onPress={handleVerify}
@@ -126,9 +142,32 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#1d2b3a",
   },
+  fieldBlock: {
+    marginBottom: 12,
+  },
+  fieldLabel: {
+    color: "#1d2b3a",
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 6,
+    marginLeft: 4,
+  },
   input: {
     marginBottom: 16,
     backgroundColor: "#cfe0f3",
+    alignSelf: "center",
+    width: "60%",
+    minHeight: 44,
+  },
+  inputText: {
+    color: "#000000",
+    fontSize: 16,
+  },
+  inputLabel: {
+    color: "#000000",
+  },
+  placeholderColor: {
+    color: "rgba(0, 0, 0, 0.5)",
   },
   helper: { marginBottom: 12, color: "#1d2b3a" },
   linkButton: { marginTop: 32, color: "#1d2b3a" },

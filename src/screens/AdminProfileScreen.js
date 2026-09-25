@@ -58,13 +58,29 @@ export default function AdminProfileScreen() {
         <View key={key} style={styles.fieldRow}>
           {editingField === key ? (
             <>
-              <TextInput
-                label={label}
-                value={draft[key] || ""}
-                onChangeText={(v) => setDraft((d) => ({ ...d, [key]: v }))}
-                mode="outlined"
-                style={styles.fieldInput}
-              />
+              <View style={styles.fieldBlock}>
+                <Text style={styles.fieldLabel}>{label}</Text>
+                <TextInput
+                  value={draft[key] || ""}
+                  onChangeText={(v) => setDraft((d) => ({ ...d, [key]: v }))}
+                  mode="outlined"
+                  style={styles.fieldInput}
+                  contentStyle={styles.inputText}
+                  labelStyle={styles.inputLabel}
+                  textColor="#000000"
+                  placeholderTextColor={styles.placeholderColor.color}
+                  placeholder={
+                    key === "phone"
+                      ? "999999999"
+                      : key === "email"
+                        ? "name@example.com"
+                        : key === "position"
+                          ? "Pastor"
+                          : "Hannah"
+                  }
+                  theme={{ colors: { primary: "#1d6fb8", background: "#cfe0f3" } }}
+                />
+              </View>
               <IconButton icon="check" onPress={() => saveEdit(key)} />
             </>
           ) : (
@@ -98,10 +114,40 @@ export default function AdminProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { marginBottom: 12 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#dfeaf7",
+  },
+  title: {
+    marginBottom: 12,
+    color: "#1d2b3a",
+  },
   fieldRow: { flexDirection: "row", alignItems: "center" },
-  fieldInput: { flex: 1 },
+  fieldBlock: {
+    flex: 1,
+    marginBottom: 8,
+  },
+  fieldLabel: {
+    color: "#1d2b3a",
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  fieldInput: {
+    flex: 1,
+    backgroundColor: "#cfe0f3",
+  },
+  inputText: {
+    color: "#000000",
+  },
+  inputLabel: {
+    color: "#000000",
+  },
+  placeholderColor: {
+    color: "rgba(0, 0, 0, 0.5)",
+  },
   listItem: { flex: 1, paddingLeft: 0 },
-  helper: { color: "#777", fontStyle: "italic" },
+  helper: { color: "#1d2b3a", fontStyle: "italic" },
 });

@@ -74,13 +74,21 @@ export default function AdminOnboardingScreen() {
         can promote another member to admin.
       </Text>
 
-      <TextInput
-        label="Search existing member by name"
-        value={search}
-        onChangeText={handleSearch}
-        mode="outlined"
-        style={styles.input}
-      />
+      <View style={styles.fieldBlock}>
+        <Text style={styles.fieldLabel}>Search existing member by name</Text>
+        <TextInput
+          value={search}
+          onChangeText={handleSearch}
+          mode="outlined"
+          style={styles.input}
+          contentStyle={styles.inputText}
+          labelStyle={styles.inputLabel}
+          textColor="#000000"
+          placeholderTextColor={styles.placeholderColor.color}
+          placeholder="Hannah"
+          theme={{ colors: { primary: "#1d6fb8", background: "#cfe0f3" } }}
+        />
+      </View>
 
       {results.length > 0 && (
         <FlatList
@@ -101,22 +109,37 @@ export default function AdminOnboardingScreen() {
         <>
           <Divider style={{ marginVertical: 16 }} />
           <Text style={styles.helper}>Promoting: {selected.name}</Text>
-          <TextInput
-            label="Position / Post"
-            value={position}
-            onChangeText={setPosition}
-            mode="outlined"
-            placeholder="e.g. Pastor, Deacon, Secretary"
-            style={styles.input}
-          />
-          <TextInput
-            label="Phone (used for OTP login)"
-            value={phone}
-            onChangeText={setPhone}
-            mode="outlined"
-            keyboardType="phone-pad"
-            style={styles.input}
-          />
+          <View style={styles.fieldBlock}>
+            <Text style={styles.fieldLabel}>Position / Post</Text>
+            <TextInput
+              value={position}
+              onChangeText={setPosition}
+              mode="outlined"
+              placeholder="Pastor"
+              style={styles.input}
+              contentStyle={styles.inputText}
+              labelStyle={styles.inputLabel}
+              textColor="#000000"
+              placeholderTextColor={styles.placeholderColor.color}
+              theme={{ colors: { primary: "#1d6fb8", background: "#cfe0f3" } }}
+            />
+          </View>
+          <View style={styles.fieldBlock}>
+            <Text style={styles.fieldLabel}>Phone (used for OTP login)</Text>
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              mode="outlined"
+              keyboardType="phone-pad"
+              placeholder="999999999"
+              style={styles.input}
+              contentStyle={styles.inputText}
+              labelStyle={styles.inputLabel}
+              textColor="#000000"
+              placeholderTextColor={styles.placeholderColor.color}
+              theme={{ colors: { primary: "#1d6fb8", background: "#cfe0f3" } }}
+            />
+          </View>
           <Button
             mode="contained"
             onPress={handlePromote}
@@ -134,9 +157,38 @@ export default function AdminOnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { marginBottom: 8 },
-  helper: { marginBottom: 16, color: "#555" },
-  input: { marginBottom: 12 },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#dfeaf7",
+  },
+  title: {
+    marginBottom: 8,
+    color: "#1d2b3a",
+  },
+  helper: { marginBottom: 16, color: "#1d2b3a" },
+  fieldBlock: {
+    marginBottom: 12,
+  },
+  fieldLabel: {
+    color: "#1d2b3a",
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  input: {
+    marginBottom: 12,
+    backgroundColor: "#cfe0f3",
+  },
+  inputText: {
+    color: "#000000",
+  },
+  inputLabel: {
+    color: "#000000",
+  },
+  placeholderColor: {
+    color: "rgba(0, 0, 0, 0.5)",
+  },
   resultsList: { maxHeight: 220, marginBottom: 8 },
 });
