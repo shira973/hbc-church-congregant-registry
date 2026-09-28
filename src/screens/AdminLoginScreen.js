@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, Platform } from "react-native";
 import { Text, TextInput, Button, HelperText } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
 import { requestOtp, verifyOtp } from "../utils/otp";
@@ -12,6 +12,14 @@ export default function AdminLoginScreen({ navigation }) {
   const [deliveredTo, setDeliveredTo] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const isWeb = Platform.OS === "web";
+  const devBypassEnabled = __DEV__ && isWeb;
+
+  useEffect(() => {
+    if (isWeb) {
+      require("bootstrap/dist/css/bootstrap.min.css");
+    }
+  }, [isWeb]);
 
   const handlePhoneChange = (value) => {
     const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
@@ -44,6 +52,122 @@ export default function AdminLoginScreen({ navigation }) {
       setBusy(false);
     }
   };
+
+  const handleDevBypass = async () => {
+    setError("");
+    setBusy(true);
+    try {
+      await signIn({
+        id: "dev-admin",
+        name: "Developer Admin",
+        phone: "0000000000",
+        isAdmin: true,
+        position: "Admin",
+      });
+    } catch (e) {
+      setError(e.message || "Could not bypass OTP in development.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const renderBootstrapPreview = () => (
+    <div className="container-fluid d-flex align-items-center justify-content-center px-3 py-5" style={{ backgroundColor: "#eef3f8", minHeight: "100vh" }}>
+      <div className="card shadow-sm border-0" style={{ width: "100%", maxWidth: 560 }}>
+        <div className="card-body p-4 p-md-5">
+          <h2 className="text-center fw-bold text-primary mb-4">Admin Login</h2>
+
+          {stage === "phone" && (
+            <>
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Registered admin phone number</label>
+                <input
+                  className="form-control"
+                  value={phone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="999999999"
+                />
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary w-100"
+                onClick={handleRequestOtp}
+                disabled={busy || phone.trim().length !== 10}
+              >
+                {busy ? "Sending..." : "Send Code"}
+              </button>
+            </>
+          )}
+
+          {stage === "code" && (
+            <>
+              <div className="alert alert-light border mb-3 text-center">
+                A 6-digit code was sent to <strong>{deliveredTo}</strong>.
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Enter code</label>
+                <input
+                  className="form-control"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="123456"
+                />
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary w-100 mb-2"
+                onClick={handleVerify}
+                disabled={busy || code.trim().length !== 6}
+              >
+                {busy ? "Verifying..." : "Verify & Sign In"}
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-link text-decoration-none p-0 w-100"
+                onClick={() => setStage("phone")}
+                disabled={busy}
+              >
+                Use a different number
+              </button>
+            </>
+          )}
+
+          {!!error && <div className="alert alert-danger mt-3 mb-0">{error}</div>}
+
+          {devBypassEnabled && (
+            <button
+              type="button"
+              className="btn btn-outline-secondary w-100 mt-3"
+              onClick={handleDevBypass}
+              disabled={busy}
+            >
+              Skip OTP (dev only)
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="btn btn-link text-decoration-none p-0 mt-4 w-100"
+            onClick={() => navigation.navigate("PublicDataEntry")}
+          >
+            I&apos;m a congregant — go to the roll book form
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isWeb) {
+    return renderBootstrapPreview();
+  }
 
   return (
     <View style={styles.container}>

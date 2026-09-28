@@ -134,6 +134,12 @@ export default function UserDataEntryScreen() {
   const placeholderColor = "#6b7280";
 
   useEffect(() => {
+    if (isWeb) {
+      require("bootstrap/dist/css/bootstrap.min.css");
+    }
+  }, [isWeb]);
+
+  useEffect(() => {
     if (!memberId) {
       setForm(emptyForm());
       return;
@@ -397,6 +403,204 @@ export default function UserDataEntryScreen() {
       </View>
     );
   };
+
+  const renderBootstrapPreview = () => (
+    <div className="container-fluid px-3 py-4" style={{ backgroundColor: "#eef3f8", minHeight: "100vh", overflowY: "auto", overflowX: "hidden" }}>
+      <div className="container pb-5">
+        <div className="row align-items-center mb-4">
+          <div className="col-md-8">
+            <h2 className="mb-0 fw-bold text-primary">{label("formTitle", lang)}</h2>
+          </div>
+          <div className="col-md-4 d-flex justify-content-md-end">
+            <div className="btn-group" role="group" aria-label="Language selector">
+              {LANGUAGES.map((language) => (
+                <button
+                  key={language}
+                  type="button"
+                  className={`btn ${lang === language ? "btn-primary" : "btn-outline-primary"}`}
+                  onClick={() => setLang(language)}
+                >
+                  {LANGUAGE_LABELS[language]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="card shadow-sm border-0">
+          <div className="card-body p-4 p-md-5">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("name", lang)}</label>
+                <input className="form-control" value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder={FIELD_PLACEHOLDERS.name} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("sex", lang)}</label>
+                <select className="form-select" value={form.sex} onChange={(e) => setField("sex", e.target.value)}>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("dob", lang)}</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.dob}
+                  onChange={(e) => setField("dob", e.target.value)}
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("phone", lang)}</label>
+                <input className="form-control" value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder={FIELD_PLACEHOLDERS.phone} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("fatherName", lang)}</label>
+                <input className="form-control" value={form.fatherName} onChange={(e) => setField("fatherName", e.target.value)} placeholder={FIELD_PLACEHOLDERS.fatherName} />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("motherName", lang)}</label>
+                <input className="form-control" value={form.motherName} onChange={(e) => setField("motherName", e.target.value)} placeholder={FIELD_PLACEHOLDERS.motherName} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("baptismDate", lang)}</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.baptismDate}
+                  onChange={(e) => setField("baptismDate", e.target.value)}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("baptizedBy", lang)}</label>
+                <select className="form-select" value={form.baptizedBy} onChange={(e) => setField("baptizedBy", e.target.value)}>
+                  <option value="">{FIELD_PLACEHOLDERS.baptizedBy}</option>
+                  {BAPTIZED_BY_OPTIONS.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("previousConvention", lang)}</label>
+                <input className="form-control" value={form.previousConvention} onChange={(e) => setField("previousConvention", e.target.value)} placeholder={FIELD_PLACEHOLDERS.previousConvention} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("transitingToConvention", lang)}</label>
+                <input className="form-control" value={form.transitingToConvention} onChange={(e) => setField("transitingToConvention", e.target.value)} placeholder={FIELD_PLACEHOLDERS.transitingToConvention} />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("dateOfDiscontinuation", lang)}</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.dateOfDiscontinuation}
+                  onChange={(e) => setField("dateOfDiscontinuation", e.target.value)}
+                />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("dateOfReborn", lang)}</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.dateOfReborn}
+                  onChange={(e) => setField("dateOfReborn", e.target.value)}
+                />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("dateOfRejoin", lang)}</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.dateOfRejoin}
+                  onChange={(e) => setField("dateOfRejoin", e.target.value)}
+                />
+              </div>
+              <div className="col-md-6" />
+
+              <div className="col-12 mt-2">
+                <h5 className="fw-bold text-primary mb-3">{label("permanentAddress", lang)}</h5>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("state", lang)}</label>
+                <input className="form-control" value={form.address.permanent.state} onChange={(e) => setAddressField("state", e.target.value)} placeholder={FIELD_PLACEHOLDERS.state} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("townCityVillage", lang)}</label>
+                <input className="form-control" value={form.address.permanent.townCityVillage} onChange={(e) => setAddressField("townCityVillage", e.target.value)} placeholder={FIELD_PLACEHOLDERS.townCityVillage} />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("district", lang)}</label>
+                <input className="form-control" value={form.address.permanent.district} onChange={(e) => setAddressField("district", e.target.value)} placeholder={FIELD_PLACEHOLDERS.district} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("locality", lang)}</label>
+                <input className="form-control" value={form.address.permanent.locality} onChange={(e) => setAddressField("locality", e.target.value)} placeholder={FIELD_PLACEHOLDERS.locality} />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("houseNumber", lang)}</label>
+                <input className="form-control" value={form.address.permanent.houseNumber} onChange={(e) => setAddressField("houseNumber", e.target.value)} placeholder={FIELD_PLACEHOLDERS.houseNumber} />
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("houseName", lang)}</label>
+                <input className="form-control" value={form.address.permanent.houseName} onChange={(e) => setAddressField("houseName", e.target.value)} placeholder={FIELD_PLACEHOLDERS.houseName} />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("pinCode", lang)}</label>
+                <input
+                  className="form-control"
+                  value={form.address.permanent.pinCode}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d{0,6}$/.test(value)) {
+                      setAddressField("pinCode", value);
+                      setPinError("");
+                    } else {
+                      setPinError("PIN can only contain numbers.");
+                    }
+                  }}
+                  placeholder={FIELD_PLACEHOLDERS.pinCode}
+                  inputMode="numeric"
+                  maxLength={6}
+                />
+                {pinError ? <div className="text-danger small mt-2">{pinError}</div> : null}
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("temporaryAddress", lang)}</label>
+                <input className="form-control" value={form.address.temporary} onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, temporary: e.target.value } }))} placeholder={FIELD_PLACEHOLDERS.temporaryAddress} />
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label fw-semibold">{label("guardianCaretaker", lang)}</label>
+                <input className="form-control" value={form.address.guardianCaretaker} onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: e.target.value } }))} placeholder={FIELD_PLACEHOLDERS.guardianCaretaker} />
+              </div>
+              <div className="col-md-6" />
+
+              <div className="col-12 d-flex justify-content-start mt-3">
+                <button type="button" className="btn btn-primary btn-lg px-4" onClick={handleSave}>
+                  {label("save", lang)}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (isWeb) {
+    return renderBootstrapPreview();
+  }
 
   return (
     <ScrollView style={styles.container}>
