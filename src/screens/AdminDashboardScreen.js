@@ -1,7 +1,8 @@
 import React, { useState, useCallback } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
-import { Text, Card, DataTable, IconButton, ActivityIndicator } from "react-native-paper";
+import { Text, Card, DataTable, IconButton, ActivityIndicator, Button } from "react-native-paper";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext";
 import { listMembers, computeAnalytics } from "../utils/firestoreHelpers";
 
 // Columns shown in the scrollable table. Add/remove freely — the
@@ -44,6 +45,21 @@ function AnalyticsSection({ analytics, loading }) {
           <Card.Content>
             <Text variant="labelMedium">Total Baptized — Female</Text>
             <Text variant="headlineMedium">{analytics.totalBaptized.F}</Text>
+          </Card.Content>
+        </Card>
+      </View>
+
+      <View style={styles.cardRow}>
+        <Card style={styles.totalCard}>
+          <Card.Content>
+            <Text variant="labelMedium">Total Deceased — Male</Text>
+            <Text variant="headlineMedium">{analytics.totalDeceased.M}</Text>
+          </Card.Content>
+        </Card>
+        <Card style={styles.totalCard}>
+          <Card.Content>
+            <Text variant="labelMedium">Total Deceased — Female</Text>
+            <Text variant="headlineMedium">{analytics.totalDeceased.F}</Text>
           </Card.Content>
         </Card>
       </View>
@@ -135,6 +151,7 @@ function UserListSection({ members, loading, onEdit }) {
 
 export default function AdminDashboardScreen() {
   const navigation = useNavigation();
+  const { signOut } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -164,6 +181,12 @@ export default function AdminDashboardScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.dashboardHeader}>
+        <Text variant="titleLarge" style={styles.dashboardTitle}>Dashboard & Members</Text>
+        <Button mode="outlined" icon="logout" onPress={signOut}>
+          Sign out
+        </Button>
+      </View>
       <AnalyticsSection analytics={analytics} loading={loading} />
       <UserListSection members={members} loading={loading} onEdit={handleEdit} />
     </ScrollView>
@@ -172,6 +195,14 @@ export default function AdminDashboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
+  dashboardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+  },
+  dashboardTitle: { flexShrink: 1 },
   analyticsSection: { marginBottom: 28 },
   listSection: { marginBottom: 28 },
   sectionTitle: { marginBottom: 12 },

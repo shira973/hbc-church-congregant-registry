@@ -11,6 +11,7 @@ import {
   HelperText,
   Menu,
   RadioButton,
+  Switch,
 } from "react-native-paper";
 import { useRoute } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
@@ -37,12 +38,27 @@ const BASIC_FIELDS = [
 
 const PERMANENT_ADDRESS_FIELDS = [
   ["state", "state"],
-  ["townCityVillage", "townCityVillage"],
   ["district", "district"],
+  ["townCityVillage", "townCityVillage"],
   ["locality", "locality"],
   ["houseNumber", "houseNumber"],
   ["houseName", "houseName"],
   ["pinCode", "pinCode"],
+];
+
+const MEGHALAYA_DISTRICTS = [
+  "East Garo Hills",
+  "North Garo Hills",
+  "South Garo Hills",
+  "West Garo Hills",
+  "South West Garo Hills",
+  "East Khasi Hills",
+  "West Jaintia Hills",
+  "East Jaintia Hills",
+  "South West Khasi Hills",
+  "West Khasi Hills",
+  "Eastern West Khasi Hills",
+  "Ri Bhoi",
 ];
 
 const DATE_FIELDS = new Set([
@@ -129,7 +145,9 @@ export default function UserDataEntryScreen() {
   const [busy, setBusy] = useState(false);
   const [datePickerField, setDatePickerField] = useState(null);
   const [baptizedByMenuVisible, setBaptizedByMenuVisible] = useState(false);
+  const [addressMenuField, setAddressMenuField] = useState("");
   const [pinError, setPinError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const isWeb = Platform.OS === "web";
   const placeholderColor = "#6b7280";
 
@@ -150,8 +168,15 @@ export default function UserDataEntryScreen() {
     })();
   }, [memberId]);
 
-  const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
-  const setAddressField = (key, value) =>
+  const setField = (key, value) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setFieldErrors((errors) => {
+      const next = { ...errors, [key]: "" };
+      if (["fatherName", "motherName"].includes(key)) next.parentNames = "";
+      return next;
+    });
+  };
+  const setAddressField = (key, value) => {
     setForm((f) => ({
       ...f,
       address: {
@@ -159,8 +184,48 @@ export default function UserDataEntryScreen() {
         permanent: { ...f.address.permanent, [key]: value },
       },
     }));
+    setFieldErrors((errors) => ({ ...errors, permanentAddress: "" }));
+  };
+  const setTemporaryAddress = (value) => {
+    setForm((f) => ({ ...f, address: { ...f.address, temporary: value } }));
+    setFieldErrors((errors) => ({ ...errors, permanentAddress: "" }));
+  };
+  const setGuardianCaretaker = (value) => {
+    setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: value } }));
+    setFieldErrors((errors) => ({ ...errors, parentNames: "" }));
+  };
+  const handlePhoneChange = (value) => {
+    setField("phone", value.replace(/\D/g, "").slice(0, 10));
+  };
 
   const handleSave = async () => {
+    const errors = {};
+    if (!form.name.trim()) errors.name = "Name is required.";
+    if (!form.sex.trim()) errors.sex = "Sex is required.";
+    if (!form.dob.trim()) errors.dob = "Date of birth is required.";
+    if (form.phone && !/^\d{10}$/.test(form.phone)) {
+      errors.phone = "Enter exactly 10 digits, or leave this optional field blank.";
+    }
+
+    const hasBothParentNames = form.fatherName.trim() && form.motherName.trim();
+    const hasGuardian = form.address.guardianCaretaker.trim();
+    if (!hasBothParentNames && !hasGuardian) {
+      errors.parentNames = "Enter both parent names, or provide a guardian/caretaker.";
+    }
+
+    const hasPermanentAddress = Object.values(form.address.permanent).some((value) =>
+      String(value || "").trim()
+    );
+    if (!hasPermanentAddress && !form.address.temporary.trim()) {
+      errors.permanentAddress = "Enter a permanent address or a temporary address.";
+    }
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setStatus("Please correct the fields marked in red.");
+      return;
+    }
+
     const pinValue = form.address.permanent.pinCode || "";
     if (pinValue && !/^\d{6}$/.test(pinValue)) {
       setPinError("PIN can only contain numbers and must be exactly 6 digits.");
@@ -212,28 +277,34 @@ export default function UserDataEntryScreen() {
     right,
     editable = true,
     placeholder,
-  }) => (
-    <View key={formKey} style={styles.fieldBlock}>
-      <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        mode="outlined"
-        style={styles.input}
-        contentStyle={styles.inputText}
-        labelStyle={styles.inputLabel}
-        textColor="#000000"
-        placeholderTextColor={placeholderColor}
-        placeholder={placeholder || FIELD_PLACEHOLDERS[formKey] || ""}
-        theme={inputTheme}
-        keyboardType={keyboardType}
-        multiline={multiline}
-        maxLength={maxLength}
-        editable={editable}
-        right={right}
-      />
-    </View>
-  );
+  }) => {
+    const validationError = fieldErrors[formKey] ||
+      (["fatherName", "motherName"].includes(formKey) ? fieldErrors.parentNames : "");
+    return (
+      <View key={formKey} style={styles.fieldBlock}>
+        <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          mode="outlined"
+          style={styles.input}
+          contentStyle={styles.inputText}
+          labelStyle={styles.inputLabel}
+          textColor="#000000"
+          placeholderTextColor={placeholderColor}
+          placeholder={placeholder || FIELD_PLACEHOLDERS[formKey] || ""}
+          theme={inputTheme}
+          keyboardType={keyboardType}
+          multiline={multiline}
+          maxLength={maxLength}
+          editable={editable}
+          right={right}
+          error={!!validationError}
+        />
+        {!!validationError && <HelperText type="error">{validationError}</HelperText>}
+      </View>
+    );
+  };
 
   const renderDateField = (labelKey, formKey) => {
     if (isWeb) {
@@ -275,6 +346,7 @@ export default function UserDataEntryScreen() {
           placeholderTextColor={placeholderColor}
           placeholder={FIELD_PLACEHOLDERS[formKey] || "YYYY-MM-DD"}
           theme={inputTheme}
+          error={!!fieldErrors[formKey]}
           editable={false}
           showSoftInputOnFocus={false}
           right={
@@ -286,6 +358,7 @@ export default function UserDataEntryScreen() {
             />
           }
         />
+        {!!fieldErrors[formKey] && <HelperText type="error">{fieldErrors[formKey]}</HelperText>}
 
         {datePickerField === formKey && (
           <View style={styles.datePickerWrapper}>
@@ -352,6 +425,117 @@ export default function UserDataEntryScreen() {
   );
 
   const renderPermanentAddressField = (labelKey, addrKey) => {
+    if (addrKey === "state") {
+      const stateValue = form.address.permanent.state;
+      const stateChoice = stateValue === "Meghalaya" ? "Meghalaya" : stateValue ? "Others" : "";
+      const otherState = stateValue && stateValue !== "Meghalaya" && stateValue !== "Others"
+        ? stateValue
+        : "";
+
+      return (
+        <View key={addrKey} style={styles.fieldBlock}>
+          <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
+          <Menu
+            visible={addressMenuField === "state"}
+            onDismiss={() => setAddressMenuField("")}
+            anchor={
+              <TextInput
+                value={stateChoice}
+                mode="outlined"
+                style={styles.input}
+                contentStyle={styles.inputText}
+                textColor="#000000"
+                placeholder="Select a state"
+                theme={inputTheme}
+                editable={false}
+                right={<TextInput.Icon icon="menu-down" onPress={() => setAddressMenuField("state")} />}
+              />
+            }
+          >
+            {["Meghalaya", "Others"].map((option) => (
+              <Menu.Item
+                key={option}
+                title={option}
+                onPress={() => {
+                  setAddressField("state", option);
+                  setAddressMenuField("");
+                }}
+              />
+            ))}
+          </Menu>
+          {stateChoice === "Others" && (
+            <TextInput
+              value={otherState}
+              onChangeText={(value) => setAddressField("state", value || "Others")}
+              mode="outlined"
+              style={styles.input}
+              contentStyle={styles.inputText}
+              textColor="#000000"
+              placeholder="Enter state"
+              theme={inputTheme}
+            />
+          )}
+        </View>
+      );
+    }
+
+    if (addrKey === "district" && form.address.permanent.state === "Meghalaya") {
+      const districtValue = form.address.permanent.district;
+      const districtChoice = MEGHALAYA_DISTRICTS.includes(districtValue)
+        ? districtValue
+        : districtValue ? "Others" : "";
+      const otherDistrict = districtValue && districtValue !== "Others" && !MEGHALAYA_DISTRICTS.includes(districtValue)
+        ? districtValue
+        : "";
+      const districtOptions = [...MEGHALAYA_DISTRICTS, "Others"];
+
+      return (
+        <View key={addrKey} style={styles.fieldBlock}>
+          <Text style={styles.fieldLabel}>{label(labelKey, lang)}</Text>
+          <Menu
+            visible={addressMenuField === "district"}
+            onDismiss={() => setAddressMenuField("")}
+            anchor={
+              <TextInput
+                value={districtChoice}
+                mode="outlined"
+                style={styles.input}
+                contentStyle={styles.inputText}
+                textColor="#000000"
+                placeholder="Select a district"
+                theme={inputTheme}
+                editable={false}
+                right={<TextInput.Icon icon="menu-down" onPress={() => setAddressMenuField("district")} />}
+              />
+            }
+          >
+            {districtOptions.map((option) => (
+              <Menu.Item
+                key={option}
+                title={option}
+                onPress={() => {
+                  setAddressField("district", option);
+                  setAddressMenuField("");
+                }}
+              />
+            ))}
+          </Menu>
+          {districtChoice === "Others" && (
+            <TextInput
+              value={otherDistrict}
+              onChangeText={(value) => setAddressField("district", value || "Others")}
+              mode="outlined"
+              style={styles.input}
+              contentStyle={styles.inputText}
+              textColor="#000000"
+              placeholder="Enter district"
+              theme={inputTheme}
+            />
+          )}
+        </View>
+      );
+    }
+
     if (addrKey === "pinCode") {
       return (
         <View key={addrKey} style={styles.fieldBlock}>
@@ -432,39 +616,46 @@ export default function UserDataEntryScreen() {
             <div className="row g-3">
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("name", lang)}</label>
-                <input className="form-control" value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder={FIELD_PLACEHOLDERS.name} />
+                <input className={`form-control ${fieldErrors.name ? "is-invalid" : ""}`} value={form.name} onChange={(e) => setField("name", e.target.value)} placeholder={FIELD_PLACEHOLDERS.name} />
+                {fieldErrors.name && <div className="invalid-feedback">{fieldErrors.name}</div>}
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("sex", lang)}</label>
-                <select className="form-select" value={form.sex} onChange={(e) => setField("sex", e.target.value)}>
+                <select className={`form-select ${fieldErrors.sex ? "is-invalid" : ""}`} value={form.sex} onChange={(e) => setField("sex", e.target.value)}>
+                  <option value="">Select sex</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
+                {fieldErrors.sex && <div className="invalid-feedback">{fieldErrors.sex}</div>}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("dob", lang)}</label>
                 <input
                   type="date"
-                  className="form-control"
+                  className={`form-control ${fieldErrors.dob ? "is-invalid" : ""}`}
                   value={form.dob}
                   onChange={(e) => setField("dob", e.target.value)}
                 />
+                {fieldErrors.dob && <div className="invalid-feedback">{fieldErrors.dob}</div>}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("phone", lang)}</label>
-                <input className="form-control" value={form.phone} onChange={(e) => setField("phone", e.target.value)} placeholder={FIELD_PLACEHOLDERS.phone} />
+                <input className={`form-control ${fieldErrors.phone ? "is-invalid" : ""}`} value={form.phone} onChange={(e) => handlePhoneChange(e.target.value)} placeholder={FIELD_PLACEHOLDERS.phone} inputMode="numeric" maxLength={10} />
+                {fieldErrors.phone && <div className="invalid-feedback">{fieldErrors.phone}</div>}
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("fatherName", lang)}</label>
-                <input className="form-control" value={form.fatherName} onChange={(e) => setField("fatherName", e.target.value)} placeholder={FIELD_PLACEHOLDERS.fatherName} />
+                <input className={`form-control ${fieldErrors.parentNames ? "is-invalid" : ""}`} value={form.fatherName} onChange={(e) => setField("fatherName", e.target.value)} placeholder={FIELD_PLACEHOLDERS.fatherName} />
+                {fieldErrors.parentNames && <div className="invalid-feedback d-block">{fieldErrors.parentNames}</div>}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("motherName", lang)}</label>
-                <input className="form-control" value={form.motherName} onChange={(e) => setField("motherName", e.target.value)} placeholder={FIELD_PLACEHOLDERS.motherName} />
+                <input className={`form-control ${fieldErrors.parentNames ? "is-invalid" : ""}`} value={form.motherName} onChange={(e) => setField("motherName", e.target.value)} placeholder={FIELD_PLACEHOLDERS.motherName} />
+                {fieldErrors.parentNames && <div className="invalid-feedback d-block">{fieldErrors.parentNames}</div>}
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("baptismDate", lang)}</label>
@@ -526,20 +717,67 @@ export default function UserDataEntryScreen() {
 
               <div className="col-12 mt-2">
                 <h5 className="fw-bold text-primary mb-3">{label("permanentAddress", lang)}</h5>
+                {fieldErrors.permanentAddress && <div className="text-danger small mb-2" role="alert">{fieldErrors.permanentAddress}</div>}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("state", lang)}</label>
-                <input className="form-control" value={form.address.permanent.state} onChange={(e) => setAddressField("state", e.target.value)} placeholder={FIELD_PLACEHOLDERS.state} />
+                <select
+                  className="form-select"
+                  value={form.address.permanent.state === "Meghalaya" ? "Meghalaya" : form.address.permanent.state ? "Others" : ""}
+                  onChange={(e) => setAddressField("state", e.target.value)}
+                >
+                  <option value="">Select state</option>
+                  <option value="Meghalaya">Meghalaya</option>
+                  <option value="Others">Others</option>
+                </select>
+                {form.address.permanent.state && form.address.permanent.state !== "Meghalaya" && (
+                  <input
+                    className="form-control mt-2"
+                    value={form.address.permanent.state === "Others" ? "" : form.address.permanent.state}
+                    onChange={(e) => setAddressField("state", e.target.value || "Others")}
+                    placeholder="Enter state"
+                  />
+                )}
               </div>
               <div className="col-md-6">
-                <label className="form-label fw-semibold">{label("townCityVillage", lang)}</label>
-                <input className="form-control" value={form.address.permanent.townCityVillage} onChange={(e) => setAddressField("townCityVillage", e.target.value)} placeholder={FIELD_PLACEHOLDERS.townCityVillage} />
+                <label className="form-label fw-semibold">{label("district", lang)}</label>
+                {form.address.permanent.state === "Meghalaya" ? (
+                  <>
+                    <select
+                      className="form-select"
+                      value={MEGHALAYA_DISTRICTS.includes(form.address.permanent.district) ? form.address.permanent.district : form.address.permanent.district ? "Others" : ""}
+                      onChange={(e) => setAddressField("district", e.target.value)}
+                    >
+                      <option value="">Select district</option>
+                      {MEGHALAYA_DISTRICTS.map((district) => (
+                        <option key={district} value={district}>{district}</option>
+                      ))}
+                      <option value="Others">Others</option>
+                    </select>
+                    {form.address.permanent.district &&
+                      (form.address.permanent.district === "Others" || !MEGHALAYA_DISTRICTS.includes(form.address.permanent.district)) && (
+                        <input
+                          className="form-control mt-2"
+                          value={form.address.permanent.district === "Others" ? "" : form.address.permanent.district}
+                          onChange={(e) => setAddressField("district", e.target.value || "Others")}
+                          placeholder="Enter district"
+                        />
+                      )}
+                  </>
+                ) : (
+                  <input
+                    className="form-control"
+                    value={form.address.permanent.district === "Others" ? "" : form.address.permanent.district}
+                    onChange={(e) => setAddressField("district", e.target.value)}
+                    placeholder={FIELD_PLACEHOLDERS.district}
+                  />
+                )}
               </div>
 
               <div className="col-md-6">
-                <label className="form-label fw-semibold">{label("district", lang)}</label>
-                <input className="form-control" value={form.address.permanent.district} onChange={(e) => setAddressField("district", e.target.value)} placeholder={FIELD_PLACEHOLDERS.district} />
+                <label className="form-label fw-semibold">{label("townCityVillage", lang)}</label>
+                <input className="form-control" value={form.address.permanent.townCityVillage} onChange={(e) => setAddressField("townCityVillage", e.target.value)} placeholder={FIELD_PLACEHOLDERS.townCityVillage} />
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("locality", lang)}</label>
@@ -577,18 +815,52 @@ export default function UserDataEntryScreen() {
               </div>
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("temporaryAddress", lang)}</label>
-                <input className="form-control" value={form.address.temporary} onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, temporary: e.target.value } }))} placeholder={FIELD_PLACEHOLDERS.temporaryAddress} />
+                <input className={`form-control ${fieldErrors.permanentAddress ? "is-invalid" : ""}`} value={form.address.temporary} onChange={(e) => setTemporaryAddress(e.target.value)} placeholder={FIELD_PLACEHOLDERS.temporaryAddress} />
+                {fieldErrors.permanentAddress && <div className="invalid-feedback d-block">{fieldErrors.permanentAddress}</div>}
               </div>
 
               <div className="col-md-6">
                 <label className="form-label fw-semibold">{label("guardianCaretaker", lang)}</label>
-                <input className="form-control" value={form.address.guardianCaretaker} onChange={(e) => setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: e.target.value } }))} placeholder={FIELD_PLACEHOLDERS.guardianCaretaker} />
+                <input className={`form-control ${fieldErrors.parentNames ? "is-invalid" : ""}`} value={form.address.guardianCaretaker} onChange={(e) => setGuardianCaretaker(e.target.value)} placeholder={FIELD_PLACEHOLDERS.guardianCaretaker} />
+                {fieldErrors.parentNames && <div className="invalid-feedback d-block">{fieldErrors.parentNames}</div>}
               </div>
               <div className="col-md-6" />
 
+              {admin && (
+                <div className="col-12 mt-2">
+                  <div className="form-check form-switch">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="is-deceased"
+                      checked={!!form.isDeceased}
+                      onChange={(event) => setField("isDeceased", event.target.checked)}
+                    />
+                    <label className="form-check-label fw-semibold" htmlFor="is-deceased">
+                      Deceased
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {status && (
+                <div
+                  className={`col-12 alert ${status.startsWith("Error:") || status.startsWith("Please") ? "alert-danger" : "alert-success"} mb-0`}
+                  role="alert"
+                  aria-live="polite"
+                >
+                  {status}
+                </div>
+              )}
+
               <div className="col-12 d-flex justify-content-start mt-3">
-                <button type="button" className="btn btn-primary btn-lg px-4" onClick={handleSave}>
-                  {label("save", lang)}
+                <button
+                  type="button"
+                  className="btn btn-primary btn-lg px-4"
+                  onClick={handleSave}
+                  disabled={busy}
+                >
+                  {busy ? "Saving..." : label("save", lang)}
                 </button>
               </div>
             </div>
@@ -661,6 +933,7 @@ export default function UserDataEntryScreen() {
             />
           </View>
         </RadioButton.Group>
+        {!!fieldErrors.sex && <HelperText type="error">{fieldErrors.sex}</HelperText>}
       </View>
 
       {isWeb ? (
@@ -672,8 +945,9 @@ export default function UserDataEntryScreen() {
                 labelKey: "phone",
                 formKey: "phone",
                 value: form.phone,
-                onChangeText: (v) => setField("phone", v),
-                keyboardType: "phone-pad",
+                onChangeText: handlePhoneChange,
+                keyboardType: "number-pad",
+                maxLength: 10,
               })}
             </View>
           </View>
@@ -739,7 +1013,9 @@ export default function UserDataEntryScreen() {
             labelKey,
             formKey,
             value: form[formKey],
-            onChangeText: (v) => setField(formKey, v),
+            onChangeText: formKey === "phone" ? handlePhoneChange : (v) => setField(formKey, v),
+            keyboardType: formKey === "phone" ? "number-pad" : "default",
+            maxLength: formKey === "phone" ? 10 : undefined,
           });
         })
       )}
@@ -747,6 +1023,9 @@ export default function UserDataEntryScreen() {
       <Text variant="titleSmall" style={styles.sectionTitle}>
         {label("permanentAddress", lang)}
       </Text>
+      {!!fieldErrors.permanentAddress && (
+        <HelperText type="error">{fieldErrors.permanentAddress}</HelperText>
+      )}
       {isWeb ? (
         Array.from({ length: Math.ceil(PERMANENT_ADDRESS_FIELDS.length / 2) }, (_, rowIndex) => {
           const rowFields = PERMANENT_ADDRESS_FIELDS.slice(rowIndex * 2, rowIndex * 2 + 2);
@@ -773,9 +1052,7 @@ export default function UserDataEntryScreen() {
                 <Text style={styles.fieldLabel}>{label("temporaryAddress", lang)}</Text>
                 <TextInput
                   value={form.address.temporary}
-                  onChangeText={(v) =>
-                    setForm((f) => ({ ...f, address: { ...f.address, temporary: v } }))
-                  }
+                  onChangeText={setTemporaryAddress}
                   mode="outlined"
                   style={[styles.input, styles.compactInput]}
                   contentStyle={styles.inputText}
@@ -784,7 +1061,9 @@ export default function UserDataEntryScreen() {
                   placeholderTextColor={placeholderColor}
                   placeholder={FIELD_PLACEHOLDERS.temporaryAddress}
                   theme={inputTheme}
+                  error={!!fieldErrors.permanentAddress}
                 />
+                {!!fieldErrors.permanentAddress && <HelperText type="error">{fieldErrors.permanentAddress}</HelperText>}
               </View>
             </View>
             <View style={styles.halfColumn}>
@@ -792,9 +1071,7 @@ export default function UserDataEntryScreen() {
                 <Text style={styles.fieldLabel}>{label("guardianCaretaker", lang)}</Text>
                 <TextInput
                   value={form.address.guardianCaretaker}
-                  onChangeText={(v) =>
-                    setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: v } }))
-                  }
+                  onChangeText={setGuardianCaretaker}
                   mode="outlined"
                   style={[styles.input, styles.compactInput]}
                   contentStyle={styles.inputText}
@@ -803,7 +1080,9 @@ export default function UserDataEntryScreen() {
                   placeholderTextColor={placeholderColor}
                   placeholder={FIELD_PLACEHOLDERS.guardianCaretaker}
                   theme={inputTheme}
+                  error={!!fieldErrors.parentNames}
                 />
+                {!!fieldErrors.parentNames && <HelperText type="error">{fieldErrors.parentNames}</HelperText>}
               </View>
             </View>
           </View>
@@ -814,9 +1093,7 @@ export default function UserDataEntryScreen() {
             <Text style={styles.fieldLabel}>{label("temporaryAddress", lang)}</Text>
             <TextInput
               value={form.address.temporary}
-              onChangeText={(v) =>
-                setForm((f) => ({ ...f, address: { ...f.address, temporary: v } }))
-              }
+              onChangeText={setTemporaryAddress}
               mode="outlined"
               style={[styles.input, styles.compactInput]}
               contentStyle={styles.inputText}
@@ -825,15 +1102,15 @@ export default function UserDataEntryScreen() {
               placeholderTextColor={placeholderColor}
               placeholder={FIELD_PLACEHOLDERS.temporaryAddress}
               theme={inputTheme}
+              error={!!fieldErrors.permanentAddress}
             />
+            {!!fieldErrors.permanentAddress && <HelperText type="error">{fieldErrors.permanentAddress}</HelperText>}
           </View>
           <View style={styles.compactFieldBlock}>
             <Text style={styles.fieldLabel}>{label("guardianCaretaker", lang)}</Text>
             <TextInput
               value={form.address.guardianCaretaker}
-              onChangeText={(v) =>
-                setForm((f) => ({ ...f, address: { ...f.address, guardianCaretaker: v } }))
-              }
+              onChangeText={setGuardianCaretaker}
               mode="outlined"
               style={[styles.input, styles.compactInput]}
               contentStyle={styles.inputText}
@@ -842,7 +1119,9 @@ export default function UserDataEntryScreen() {
               placeholderTextColor={placeholderColor}
               placeholder={FIELD_PLACEHOLDERS.guardianCaretaker}
               theme={inputTheme}
+              error={!!fieldErrors.parentNames}
             />
+            {!!fieldErrors.parentNames && <HelperText type="error">{fieldErrors.parentNames}</HelperText>}
           </View>
         </>
       )}
@@ -852,6 +1131,14 @@ export default function UserDataEntryScreen() {
           <Text variant="titleSmall" style={styles.sectionTitle}>
             Admin-only fields
           </Text>
+          <View style={styles.deceasedToggleRow}>
+            <Text style={styles.fieldLabel}>Deceased</Text>
+            <Switch
+              value={!!form.isDeceased}
+              onValueChange={(value) => setField("isDeceased", value)}
+              accessibilityLabel="Mark member as deceased"
+            />
+          </View>
           <View style={styles.fieldBlock}>
             <Text style={styles.fieldLabel}>{label("dateOfDeath", lang)}</Text>
             <TextInput
@@ -890,7 +1177,11 @@ export default function UserDataEntryScreen() {
         {label("save", lang)}
       </Button>
 
-      {!!status && <HelperText type="info">{status}</HelperText>}
+      {!!status && (
+        <HelperText type={status.startsWith("Please") || status.startsWith("Error:") ? "error" : "info"}>
+          {status}
+        </HelperText>
+      )}
     </ScrollView>
   );
 }
@@ -921,6 +1212,12 @@ const styles = StyleSheet.create({
   radioLabel: {
     color: "#1d2b3a",
     fontSize: 14,
+  },
+  deceasedToggleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
   },
   input: {
     marginBottom: 12,

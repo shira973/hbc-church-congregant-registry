@@ -10,7 +10,9 @@ import {
   orderBy,
   serverTimestamp,
 } from "firebase/firestore";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { db } from "../../firebaseConfig";
+import mockMembersSeed from "../data/mockMembers.json";
 
 /**
  * DATA MODEL (single Firestore collection: "members")
@@ -43,6 +45,21 @@ import { db } from "../../firebaseConfig";
 
 const MEMBERS = "members";
 const OTPS = "otps"; // short-lived OTP docs, keyed by phone
+const USE_LOCAL_MOCK_DATA = true;
+const LOCAL_MEMBERS_KEY = "hbcrb_mock_members";
+
+async function readMockMembers() {
+  const stored = await AsyncStorage.getItem(LOCAL_MEMBERS_KEY);
+  if (stored !== null) return JSON.parse(stored);
+
+  const seed = mockMembersSeed.map((member) => ({ ...member }));
+  await AsyncStorage.setItem(LOCAL_MEMBERS_KEY, JSON.stringify(seed));
+  return seed;
+}
+
+async function writeMockMembers(members) {
+  await AsyncStorage.setItem(LOCAL_MEMBERS_KEY, JSON.stringify(members));
+}
 
 export const DEFAULT_MEMBER = {
   name: "",
@@ -68,6 +85,7 @@ export const DEFAULT_MEMBER = {
   },
   previousConvention: "",
   transitingToConvention: "",
+  isDeceased: false,
   dateOfDeath: "",
   dateOfDiscontinuation: "",
   dateOfReborn: "",
@@ -78,6 +96,21 @@ export const DEFAULT_MEMBER = {
 };
 
 export async function createMember(data) {
+  if (USE_LOCAL_MOCK_DATA) {
+    const members = await readMockMembers();
+    const id = `mock-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const now = new Date().toISOString();
+    members.push({
+      ...DEFAULT_MEMBER,
+      ...data,
+      id,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await writeMockMembers(members);
+    return id;
+  }
+
   const payload = {
     ...DEFAULT_MEMBER,
     ...data,
@@ -89,22 +122,50 @@ export async function createMember(data) {
 }
 
 export async function updateMember(memberId, data) {
+  if (USE_LOCAL_MOCK_DATA) {
+    const members = await readMockMembers();
+    const memberIndex = members.findIndex((member) => member.id === memberId);
+    if (memberIndex < 0) throw new Error("Member not found in local mock data.");
+    members[memberIndex] = {
+      ...members[memberIndex],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    await writeMockMembers(members);
+    return;
+  }
+
   const ref = doc(db, MEMBERS, memberId);
   await updateDoc(ref, { ...data, updatedAt: serverTimestamp() });
 }
 
 export async function getMember(memberId) {
+  if (USE_LOCAL_MOCK_DATA) {
+    const members = await readMockMembers();
+    return members.find((member) => member.id === memberId) || null;
+  }
+
   const snap = await getDoc(doc(db, MEMBERS, memberId));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 }
 
 export async function listMembers() {
+  if (USE_LOCAL_MOCK_DATA) {
+    const members = await readMockMembers();
+    return members.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }
+
   const q = query(collection(db, MEMBERS), orderBy("name"));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
 export async function findMemberByPhone(phone) {
+  if (USE_LOCAL_MOCK_DATA) {
+    const members = await readMockMembers();
+    return members.find((member) => member.phone === phone) || null;
+  }
+
   const q = query(collection(db, MEMBERS), where("phone", "==", phone));
   const snap = await getDocs(q);
   if (snap.empty) return null;
@@ -119,6 +180,11 @@ export async function promoteToAdmin(memberId, { position, phone }) {
 }
 
 export async function listAdmins() {
+  if (USE_LOCAL_MOCK_DATA) {
+    const members = await readMockMembers();
+    return members.filter((member) => member.isAdmin === true);
+  }
+
   const q = query(collection(db, MEMBERS), where("isAdmin", "==", true));
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -153,11 +219,21 @@ export function computeAnalytics(members) {
     },
     { M: 0, F: 0 }
   );
+  const totalDeceased = members.reduce(
+    (acc, member) => {
+      if (!member.isDeceased && !member.dateOfDeath) return acc;
+      const sexKey = (member.sex || "").toLowerCase().startsWith("f") ? "F" : "M";
+      acc[sexKey] += 1;
+      return acc;
+    },
+    { M: 0, F: 0 }
+  );
 
   return {
     deathsByYear: byYearSex("dateOfDeath"),
     baptismsByYear: byYearSex("baptismDate"),
     totalBaptized,
+    totalDeceased,
   };
 }
 

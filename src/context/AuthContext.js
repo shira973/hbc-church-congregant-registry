@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { signOut as firebaseSignOut } from "firebase/auth";
+import { auth } from "../../firebaseConfig";
 
 const AuthContext = createContext(null);
 const SESSION_KEY = "hbcrb_admin_session";
@@ -26,7 +28,10 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     setAdmin(null);
-    await AsyncStorage.removeItem(SESSION_KEY);
+    await Promise.all([
+      AsyncStorage.removeItem(SESSION_KEY),
+      firebaseSignOut(auth),
+    ]);
   };
 
   return (
