@@ -13,7 +13,7 @@ import {
   RadioButton,
   Switch,
 } from "react-native-paper";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { useAuth } from "../context/AuthContext";
 import { createMember, updateMember, getMember, DEFAULT_MEMBER } from "../utils/firestoreHelpers";
 import { LANGUAGES, LANGUAGE_LABELS, label } from "../i18n/translations";
@@ -128,7 +128,9 @@ function parseDateValue(value) {
 export default function UserDataEntryScreen() {
   const { admin } = useAuth(); // null when a congregant fills this in unauthenticated
   const route = useRoute();
+  const navigation = useNavigation();
   const memberId = route.params?.memberId;
+  const createAdmin = route.params?.createAdmin === true && !!admin;
   const inputTheme = {
     colors: {
       text: "#000000",
@@ -159,14 +161,19 @@ export default function UserDataEntryScreen() {
 
   useEffect(() => {
     if (!memberId) {
-      setForm(emptyForm());
+      const nextForm = emptyForm();
+      if (createAdmin) {
+        nextForm.isAdmin = true;
+        nextForm.position = "Admin";
+      }
+      setForm(nextForm);
       return;
     }
     (async () => {
       const existing = await getMember(memberId);
       if (existing) setForm({ ...emptyForm(), ...existing });
     })();
-  }, [memberId]);
+  }, [memberId, createAdmin]);
 
   const setField = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -239,6 +246,10 @@ export default function UserDataEntryScreen() {
       // (congregant, self-service) submits, regardless of what's in
       // local state — this mirrors the Firestore rule that also blocks it.
       const payload = { ...form };
+      if (createAdmin) {
+        payload.isAdmin = true;
+        payload.position = payload.position || "Admin";
+      }
       if (!admin) {
         payload.dateOfDeath = "";
         payload.remarks = "";
@@ -253,6 +264,7 @@ export default function UserDataEntryScreen() {
         await createMember(payload);
         setStatus("Entry submitted. Thank you.");
         setForm(emptyForm());
+        if (createAdmin) navigation.setParams({ createAdmin: false });
       }
     } catch (e) {
       setStatus(`Error: ${e.message}`);

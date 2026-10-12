@@ -27,7 +27,7 @@ function AdminTabs() {
       <Tab.Screen
         name="DataEntryAdmin"
         component={UserDataEntryScreen}
-        options={{ title: "New / Edit Entry" }}
+        options={{ title: "New Entry" }}
       />
       <Tab.Screen
         name="Onboarding"

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, StyleSheet, FlatList } from "react-native";
+import React, { useCallback, useState } from "react";
+import { View, StyleSheet, ScrollView } from "react-native";
 import {
   Text,
   TextInput,
@@ -8,10 +8,12 @@ import {
   HelperText,
   Divider,
 } from "react-native-paper";
-import { listMembers, promoteToAdmin } from "../utils/firestoreHelpers";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { listAdmins, listMembers, promoteToAdmin } from "../utils/firestoreHelpers";
 import { useAuth } from "../context/AuthContext";
 
 export default function AdminOnboardingScreen() {
+  const navigation = useNavigation();
   const { admin } = useAuth();
   const [search, setSearch] = useState("");
   const [results, setResults] = useState([]);
@@ -20,6 +22,17 @@ export default function AdminOnboardingScreen() {
   const [phone, setPhone] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [admins, setAdmins] = useState([]);
+
+  const loadAdmins = useCallback(async () => {
+    setAdmins(await listAdmins());
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadAdmins();
+    }, [loadAdmins])
+  );
 
   // Simple client-side search over the full member list — fine at
   // congregation scale; swap for a Firestore prefix query if the roll
@@ -53,6 +66,7 @@ export default function AdminOnboardingScreen() {
     try {
       await promoteToAdmin(selected.id, { position, phone });
       setStatus(`${selected.name} is now an admin.`);
+      await loadAdmins();
       setSelected(null);
       setSearch("");
       setPosition("");
@@ -65,7 +79,7 @@ export default function AdminOnboardingScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text variant="headlineSmall" style={styles.title}>
         Onboard a New Admin
       </Text>
@@ -73,6 +87,33 @@ export default function AdminOnboardingScreen() {
         Signed in as {admin?.name} ({admin?.position}). Only existing admins
         can promote another member to admin.
       </Text>
+
+      <Button
+        mode="contained"
+        icon="account-plus"
+        style={styles.onboardButton}
+        onPress={() => navigation.navigate("DataEntryAdmin", { createAdmin: true })}
+      >
+        Onboard New Admin
+      </Button>
+
+      <Divider style={styles.sectionDivider} />
+      <Text variant="titleMedium" style={styles.sectionTitle}>Admins</Text>
+      {admins.length ? (
+        admins.map((item) => (
+          <List.Item
+            key={item.id}
+            title={item.name || "Unnamed admin"}
+            description={[item.position, item.phone].filter(Boolean).join(" · ")}
+            left={(props) => <List.Icon {...props} icon="account-check" />}
+          />
+        ))
+      ) : (
+        <Text style={styles.helper}>No admins found.</Text>
+      )}
+
+      <Divider style={styles.sectionDivider} />
+      <Text variant="titleMedium" style={styles.sectionTitle}>Promote Existing Member</Text>
 
       <View style={styles.fieldBlock}>
         <Text style={styles.fieldLabel}>Search existing member by name</Text>
@@ -91,18 +132,16 @@ export default function AdminOnboardingScreen() {
       </View>
 
       {results.length > 0 && (
-        <FlatList
-          data={results}
-          keyExtractor={(item) => item.id}
-          style={styles.resultsList}
-          renderItem={({ item }) => (
+        <View style={styles.resultsList}>
+          {results.slice(0, 20).map((item) => (
             <List.Item
+              key={item.id}
               title={item.name}
               description={item.phone || "No phone on file"}
               onPress={() => selectMember(item)}
             />
-          )}
-        />
+          ))}
+        </View>
       )}
 
       {selected && (
@@ -152,7 +191,7 @@ export default function AdminOnboardingScreen() {
       )}
 
       {!!status && <HelperText type="info">{status}</HelperText>}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -166,6 +205,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     color: "#1d2b3a",
   },
+  onboardButton: { marginBottom: 8 },
+  sectionDivider: { marginVertical: 16 },
+  sectionTitle: { marginBottom: 8, color: "#1d2b3a" },
   helper: { marginBottom: 16, color: "#1d2b3a" },
   fieldBlock: {
     marginBottom: 12,
